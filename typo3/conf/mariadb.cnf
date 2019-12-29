@@ -1,0 +1,28 @@
+[client]
+default-character-set = utf8mb4
+
+[mysql]
+[mysqld]
+character-set-filesystem = utf8mb4
+character-set-client = utf8mb4
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+
+key_buffer_size = 200M
+query_cache_size = 100M
+
+innodb_buffer_pool_size = 250M
+innodb_log_buffer_size = 10M
+
+tmp_table_size = 200M
+max_heap_table_size = 200M
+
+open-files-limit = 2048
+thread_cache_size = 12
+
+query_cache_limit = 256k
+query_cache_size = 60M
+query_cache_type = 1
+
+max_connections = 20
+max_allowed_packet = 16M

@@ -1,0 +1,48 @@
+version: "3"
+
+volumes:
+        data:
+                driver_opts:
+                        type: none
+                        device: /path/to/confluence/data
+                        o: bind
+        database:
+                driver_opts:
+                        type: none
+                        device: /path/to/confluence/database
+                        o: bind
+
+networks:
+        default:
+                external:
+                        name: proxy-tier
+
+services:
+        confluence_server:
+                image: atlassian/confluence-server:7-alpine-adoptopenjdk8
+                container_name: confluence_server
+                depends_on:
+                        - confluence_db
+                links:
+                        - confluence_db
+                volumes:
+                        - data:/var/atlassian/application-data/confluence
+                environment:
+                        - ATL_TOMCAT_SCHEME=https
+                        - ATL_TOMCAT_SECURE=true
+                        - VIRTUAL_HOST=confluence.example.tld
+                        - VIRTUAL_PORT=8090
+                        - LETSENCRYPT_HOST=confluence.example.tld
+                        - LETSENCRYPT_EMAIL=mail@example.tld
+                restart: always
+
+        confluence_db:
+                image: postgres:11-alpine
+                container_name: confluence_db
+                volumes:
+                        - database:/var/lib/postgresql
+                environment:
+                        - POSTGRES_USER=confluence
+                        - POSTGRES_PASSWORD=secret
+                        - POSTGRES_DB=confluence
+                restart: always

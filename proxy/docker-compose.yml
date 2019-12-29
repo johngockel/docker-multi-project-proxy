@@ -1,0 +1,60 @@
+version: "3"
+
+volumes:
+        conf.d:
+        vhost.d:
+        html:
+        htpasswd:
+                driver_opts:
+                        type: none
+                        device: /path/to/htpasswd
+                        o: bind
+        certs:
+                driver_opts:
+                        type: none
+                        device: /path/to/certs
+                        o: bind
+
+networks:
+        default:
+                external:
+                        name: proxy-tier
+
+services:
+        proxy:
+                image: jwilder/nginx-proxy:alpine
+                container_name: proxy
+                ports:
+                        - "80:80"
+                        - "443:443"
+                volumes:
+                        - conf.d:/etc/nginx/conf.d
+                        - vhost.d:/etc/nginx/vhost.d
+                        - html:/usr/share/nginx/html
+                        - htpasswd:/etc/nginx/htpasswd:ro
+                        - certs:/etc/nginx/certs:ro
+                        - /var/run/docker.sock:/tmp/docker.sock:ro
+                        - ./conf/uploadsize.conf:/etc/nginx/conf.d/uploadsize.conf:ro
+                        - ./conf/timeout.conf:/etc/nginx/conf.d/timeout.conf:ro
+                environment:
+                        - ENABLE_IPV6=true
+                        - DHPARAM_GENERATION=false
+                restart: always
+                labels:
+                        - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy=true
+
+        letsencrypt:
+                image: jrcs/letsencrypt-nginx-proxy-companion:v1.12
+                container_name: letsencrypt
+                depends_on:
+                        - proxy
+                volumes:
+                        - vhost.d:/etc/nginx/vhost.d
+                        - html:/usr/share/nginx/html
+                        - certs:/etc/nginx/certs
+                        - /var/run/docker.sock:/var/run/docker.sock:ro
+                environment:
+                        #- ACME_CA_URI=https://acme-staging-v02.api.letsencrypt.org/directory
+                        - NGINX_PROXY_CONTAINER=proxy
+                        - DEFAULT_EMAIL=mail@example.tld
+                restart: always
